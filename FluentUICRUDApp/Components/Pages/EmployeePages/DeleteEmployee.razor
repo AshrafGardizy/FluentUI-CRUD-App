@@ -1,0 +1,65 @@
+﻿@page "/Delete/{Id:int}"
+
+
+@inject IDbContextFactory<AppDbContext> dbFactory
+@inject NavigationManager navigationManager
+@inject IDialogService dialogService
+@rendermode InteractiveServer
+<PageTitle>Delete Employee</PageTitle>
+<FluentGrid xs="12" Justify="JustifyContent.Center" AdaptiveRendering="true" Style="background-color: var(--neutral-layer-3); padding: 4px; ">
+    <FluentCard>
+        <FluentGridItem>
+            <FluentLabel Typo="Typography.Header" Style="margin-bottom:10px;">Delete Employee</FluentLabel>
+            <EditForm Model="employee">
+                <FluentLabel>Name:</FluentLabel>
+                <FluentTextField @bind-Value="employee.Name" Style="width:100%"></FluentTextField>
+                <FluentLabel>Email:</FluentLabel>
+                <FluentTextField TextFieldType="TextFieldType.Email" @bind-Value="employee.Email" Style="width:100%"></FluentTextField>
+                <FluentLabel>Age:</FluentLabel>
+                <FluentTextField @bind-Value="employee.Age" Style="width:100%"></FluentTextField>
+                <br />
+                <FluentButton Appearance="Appearance.Accent" OnClick="()=>RemoveEmployee()">Delete Employee</FluentButton>
+                <FluentAnchor Href="/">Cancel</FluentAnchor>
+            </EditForm>
+
+        </FluentGridItem>
+    </FluentCard>
+</FluentGrid>
+@code {
+    [Parameter]
+    public int? Id { get; set; } = null;
+
+    [SupplyParameterFromForm]
+    public Employee employee { get; set; } = new Employee();
+
+    AppDbContext? context { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        context = dbFactory.CreateDbContext();
+        if (Id is null)
+        {
+            employee = new Employee();
+        }
+        else
+        {
+            employee = await context!.Employees!.FindAsync(Id);
+        }
+        await base.OnInitializedAsync();
+    }
+    private async Task RemoveEmployee()
+    {
+        if (Id != null)
+        {
+            context!.Employees.Remove(employee);
+            dialogService.ShowSuccess($"The {employee.Name} has been removed successfully.");
+        }
+        
+        var result = await context!.SaveChangesAsync();
+        if (result > 0)
+        {
+            await Task.Delay(1200);
+            navigationManager.NavigateTo("/");
+        }
+    }
+}

@@ -1,0 +1,53 @@
+﻿@page "/"
+@using FluentUICRUDApp.Data
+@using FluentUICRUDApp.Models
+@using Microsoft.FluentUI.AspNetCore.Components
+
+@rendermode InteractiveServer
+@inject IDbContextFactory<AppDbContext> dbFactory;
+@inject NavigationManager navManager
+<PageTitle>Employees</PageTitle>
+@if (employeeQuery is null)
+{
+    <FluentProgress Style="width:30px;height:30px;" />
+}else
+{
+    <FluentStack Style="margin-bottom:10px;">
+        <FluentLabel Typo="Typography.Header">Employee</FluentLabel>
+        <FluentButton OnClick="()=>addEmployee()" Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.PersonAdd().WithColor(Color.Success))">Add New Employee</FluentButton>
+    </FluentStack>
+    <FluentDataGrid Items="@employeeQuery">
+        <PropertyColumn Property="@( p=> p.Id)" Sortable="true" />
+            <TemplateColumn Align="Align.Start" Title="Avatar">
+                <FluentPersona ImageSize="30px" Initials="@context!.Name[0]!.ToString().ToUpper()" />
+            </TemplateColumn>
+        <PropertyColumn Property="@(p => p.Name)" Sortable="true" />
+        <PropertyColumn Property="@(p => p.Email)" Sortable="true" />
+        <PropertyColumn Property="@(p => p.Age)" Sortable="true" />
+            <TemplateColumn Title="Action" Align="Align.Start">
+            <FluentAnchor Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.Delete())" Href="@($"/Delete/{context.Id}")">Delete</FluentAnchor>
+            <FluentAnchor Appearance="Appearance.Outline" IconStart="@(new Icons.Regular.Size20.CommentEdit())" Href="@($"/Edit/{context.Id}")">Edite</FluentAnchor>
+            </TemplateColumn>
+    </FluentDataGrid>
+}
+
+
+
+
+@code{
+
+    private AppDbContext? context { get; set; }
+    private IQueryable<Employee>? employeeQuery;
+    protected override async Task OnInitializedAsync()
+    {
+
+        context = dbFactory.CreateDbContext();
+        var result  = await context.Employees.ToListAsync();
+        employeeQuery = result.AsQueryable();
+
+        await base.OnInitializedAsync();
+    }
+    private async Task addEmployee(){
+        navManager.NavigateTo("/Add");
+    }
+}

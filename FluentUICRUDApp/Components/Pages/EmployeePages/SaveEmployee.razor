@@ -1,0 +1,53 @@
+﻿@page "/Add"
+@inject IDbContextFactory<AppDbContext> dbFactory
+@inject NavigationManager navigationManager
+@inject IDialogService dialogService
+@rendermode InteractiveServer
+<PageTitle>Add Employee</PageTitle>
+
+<FluentGrid xs="12" Justify="JustifyContent.Center" AdaptiveRendering="true" Style="background-color: var(--neutral-layer-3); padding: 4px; ">
+    <FluentCard>
+        <FluentGridItem Style="width:100%">
+            <FluentLabel Typo="Typography.Header" Style="margin-bottom:10px;">Add Employee</FluentLabel>
+           
+            <EditForm Model="employee">
+                <FluentLabel>Name:</FluentLabel>
+                <FluentTextField @bind-Value="employee.Name" Style="width:100%"></FluentTextField>
+                <FluentLabel>Email:</FluentLabel>
+                <FluentTextField TextFieldType="TextFieldType.Email" @bind-Value="employee.Email" Style="width:100%"></FluentTextField>
+                <FluentLabel>Age:</FluentLabel>
+                <FluentTextField @bind-Value="employee.Age" Style="width:100%"></FluentTextField>
+                <br />
+                <FluentButton Appearance="Appearance.Accent" OnClick="()=>AddEmployee()">Add Employee</FluentButton>
+                <FluentAnchor Href="/">Cancel</FluentAnchor>
+            </EditForm>
+
+        </FluentGridItem>
+    </FluentCard>
+</FluentGrid>
+@code {
+
+    [SupplyParameterFromForm]
+    public Employee employee { get; set; } = new Employee();
+
+    AppDbContext? context { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        context =  dbFactory.CreateDbContext();
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task AddEmployee()
+    {
+        await context!.Employees.AddAsync(employee!);
+        dialogService.ShowSuccess($"The {employee.Name} has been added successfully.");
+        var result = await context.SaveChangesAsync();
+        if (result > 0)
+        {
+            await Task.Delay(1200);
+            navigationManager.NavigateTo("/");
+        }
+    }
+}
